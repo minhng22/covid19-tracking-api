@@ -21,15 +21,6 @@ export class UsStates extends Entity {
   })
   url: string;
 
-  @property()
-  positive_case: number;
-
-  @property()
-  positive_case_recovered: number;
-
-  @property()
-  negative_case: number;
-
   constructor(data?: Partial<UsStates>) {
     super(data);
   }

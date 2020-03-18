@@ -16,24 +16,10 @@ export class County extends Entity {
   name: string;
 
   @property({
-    type: 'number',
-    required: true,
-    default: 0,
-  })
-  negative_case: number;
-
-  @property({
-    type: 'number',
+    type: 'string',
     required: true,
   })
-  positive_case: number;
-
-  @property({
-    type: 'number',
-    required: true,
-  })
-  positive_recovered_case: number;
-
+  usStateId: string;
 
   constructor(data?: Partial<County>) {
     super(data);

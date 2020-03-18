@@ -1,5 +1,5 @@
 import {Count, CountSchema, Filter, FilterExcludingWhere, repository, Where} from '@loopback/repository';
-import {get, getModelSchemaRef, param, patch, put, requestBody} from '@loopback/rest';
+import {get, getModelSchemaRef, param, patch, requestBody} from '@loopback/rest';
 import {UsStates} from '../models';
 import {UsStatesRepository} from '../repositories';
 
@@ -83,19 +83,5 @@ export class UsStateControllerController {
     @param.filter(UsStates, {exclude: 'where'}) filter?: FilterExcludingWhere<UsStates>
   ): Promise<UsStates> {
     return this.usStatesRepository.findById(id, filter);
-  }
-
-  @put('/us-states/{id}', {
-    responses: {
-      '204': {
-        description: 'USStates PUT success',
-      },
-    },
-  })
-  async replaceById(
-    @param.path.string('id') id: string,
-    @requestBody() states: UsStates,
-  ): Promise<void> {
-    await this.usStatesRepository.replaceById(id, states);
   }
 }
