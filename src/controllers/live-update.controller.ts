@@ -1,12 +1,17 @@
 import {inject} from '@loopback/context';
-import {USState} from '../domain/Territory';
-import {CaseNumberRepository, CountyRepository, UsStatesRepository} from '../repositories';
+import {MedicalType} from '../domain/Medical';
+import {Territory, USState} from '../domain/Territory';
+import {CaseNumber} from '../models';
+import {CaseNumberRepository, CountryRepository, CountyRepository, UsStatesRepository} from '../repositories';
+
+const file = require('fs')
 
 export class LiveUpdateController {
   constructor(
     @inject('repositories.UsStatesRepository') private usStatesRepository: UsStatesRepository,
     @inject('repositories.CaseNumberRepository') private caseNumberRepository: CaseNumberRepository,
-    @inject('repositories.CountyRepository') private countyRepository: CountyRepository
+    @inject('repositories.CountyRepository') private countyRepository: CountyRepository,
+    @inject('repositories.CountryRepository') private countryRepository: CountryRepository
   ) {}
 
   async liveUpdateStateData() {
@@ -16,10 +21,19 @@ export class LiveUpdateController {
       console.log(state)
       switch (state.name) {
         case (USState.Wisconsin):
-          //this.liveUpdateWI(state)
+          // await this.liveUpdateTotalTable(state)
           break
         case (USState.Minnesota):
-          this.liveUpdateMN(state)
+          // await this.liveUpdateMN(state)
+          break
+        case (USState.Washington):
+          // await this.liveUpdateTotalTable(state)
+          break
+        case (USState.New_York):
+          //await this.liveUpdateNY(state)
+          break
+        case (USState.California):
+          // await this.liveUpdateCA(state)
           break
       }
     }
@@ -27,34 +41,185 @@ export class LiveUpdateController {
     console.log('Finish live update state data')
   }
 
+  async liveUpdateCA(state: any) {
+    console.log('Updating state ' + state.name)
+    const puppeteer = require('puppeteer')
+
+    const b = await puppeteer.launch()
+    b.on('disconnected', () => {
+      console.log('disconnected browerw')
+    })
+    const p = await b.newPage()
+
+    await p.goto(state.url)
+
+    p.setDefaultNavigationTimeout(0);
+    p.setRequestInterception(true);
+
+    p.on('request', async (request: any) => {
+      if (request.resourceType() === 'image' || request.resourceType() === 'media') {
+        request.abort();
+      } else {
+        request.continue();
+      }
+    });
+
+    await p.goto(state.url)
+
+    await p.waitForXPath("//li[contains(., 'Positive:')]", 5000)
+    const positive = await p.$x("//li[contains(., 'Positive:')]")
+    const positiveText = this.extractInteger(String(await this.innerText(p, positive[0])))
+
+    await console.log('positive national ' + positiveText)
+
+    await p.waitForXPath("//p[contains(., 'there are a total of:')]", 5000)
+    const death = await p.$x("//p[contains(., 'there are a total of:')]")
+    const deathText = this.extractInteger(String(await this.innerText(p, death[0])))
+
+    await console.log('death national ' + deathText)
+  }
+
+  async liveUpdateNY(state: any) {
+    console.log('Updating state ' + state.name)
+    const puppeteer = require('puppeteer')
+
+    const b = await puppeteer.launch()
+    b.on('disconnected', () => {
+      console.log('disconnected browerw')
+    })
+    const p = await b.newPage()
+
+    await p.goto(state.url)
+
+    p.setDefaultNavigationTimeout(0);
+    p.setRequestInterception(true);
+
+    p.on('request', async (request: any) => {
+      if (request.resourceType() === 'image' || request.resourceType() === 'media') {
+        request.abort();
+      } else {
+        request.continue();
+      }
+    });
+
+    await p.goto(state.url)
+
+    await p.waitForXPath("//td[contains(., 'Total Number of Positive Cases')]", 5000)
+    const total = await p.$x("//td[contains(., 'Total Number of Positive Cases')]")
+
+    const positive = await this.nextEl(p, total[0])
+    const posText = this.extractInteger(String(await this.innerText(p, positive)))
+    await console.log('positive: ' + posText)
+
+    // this.caseNumberRepository.create(new CaseNumber({
+    //   'no': posText ? posText : -1,
+    //   'medicalType': MedicalType.Positive,
+    //   'territoryType': Territory.USSTATE.toString(),
+    //   'territoryId': state.id,
+    //   'timeStampt': this.getCurrentDateTime()
+    // }))
+
+    // const death = await this.nextEl(p, positive)
+    // const deathText = this.extractInteger(String(await this.innerText(p, death)))
+    // console.log('death: ' + deathText)
+
+    // this.caseNumberRepository.create(new CaseNumber({
+    //   'no': deathText ? deathText : -1,
+    //   'medicalType': MedicalType.Death,
+    //   'territoryType': Territory.USSTATE.toString(),
+    //   'territoryId': state.id,
+    //   'timeStampt': this.getCurrentDateTime()
+    // }))
+
+    await b.close()
+  }
+
+  async liveUpdateTotalTable(state: any) {
+    console.log('Updating state ' + state.name)
+    const puppeteer = require('puppeteer')
+
+    const b = await puppeteer.launch()
+    b.on('disconnected', () => {
+      console.log('disconnected browerw')
+    })
+    const p = await b.newPage()
+
+    await p.goto(state.url)
+
+    p.setDefaultNavigationTimeout(0);
+    p.setRequestInterception(true);
+
+    p.on('request', async (request: any) => {
+      if (request.resourceType() === 'image' || request.resourceType() === 'media') {
+        request.abort();
+      } else {
+        request.continue();
+      }
+    });
+
+    await p.goto(state.url)
+
+    await p.waitForXPath("//td[contains(., 'Total')]", 5000)
+    const total = await p.$x("//td[contains(., 'Total')]")
+
+    const positive = await this.nextEl(p, total[0])
+    const posText = this.extractInteger(String(await this.innerText(p, positive)))
+    console.log('positive: ' + posText)
+
+    this.caseNumberRepository.create(new CaseNumber({
+      'no': posText ? posText : -1,
+      'medicalType': MedicalType.Positive,
+      'territoryType': Territory.USSTATE.toString(),
+      'territoryId': state.id,
+      'timeStampt': this.getCurrentDateTime()
+    }))
+
+    const death = await this.nextEl(p, positive)
+    const deathText = this.extractInteger(String(await this.innerText(p, death)))
+    console.log('death: ' + deathText)
+
+    this.caseNumberRepository.create(new CaseNumber({
+      'no': deathText ? deathText : -1,
+      'medicalType': MedicalType.Death,
+      'territoryType': Territory.USSTATE.toString(),
+      'territoryId': state.id,
+      'timeStampt': this.getCurrentDateTime()
+    }))
+
+    await b.close()
+  }
+
+  extractInteger(chars: string): number {
+    let ex = ''
+    for (let c of chars) {
+      if (this.isNumeric(c)) {
+        ex += c
+      }
+    }
+    return parseInt(ex)
+  }
+
   async liveUpdateCountryData() {
     const cheerio = require('cheerio')
     const axios = require('axios')
 
-    await axios.get('https://www.cdc.gov/coronavirus/2019-ncov/cases-updates/cases-in-us.html').then((response: any) => {
-      const $ = cheerio.load(response.data)
-      const allData = $('div .card-body.bg-white ul li').text().trim()
+    const allCountries = await this.countryRepository.find()
+    for (let country of allCountries) {
+      await this.liveUpdateText(country)
+    }
+  }
 
-      const iTotalCases = allData.indexOf('Total cases: ') + 'Total cases: '.length
-      const iTotalCasesEnd = allData.indexOf('Total deaths: ')
-      const iTotalDeaths = allData.indexOf('Total deaths: ') + 'Total deaths: '.length
-      const iTotalDeathsEnd = allData.indexOf('Jurisdictions reporting cases: ')
+  async innerText(page: any, elementHandle: any) {
+    return await page.evaluate((el: any) => el.innerText, elementHandle)
+  }
 
-      const totalCase = allData.substring(iTotalCases, iTotalCasesEnd)
-      const totalDeath = allData.substring(iTotalDeaths, iTotalDeathsEnd)
-
-      console.log(totalCase)
-      console.log(totalDeath)
-      console.log(this.getCurrentDateTime())
-    })
+  async nextEl(page: any, elementHandle: any) {
+    return await page.evaluateHandle((el: any) => el.nextElementSibling, elementHandle)
   }
 
   getCurrentDateTime(): string {
     var today = new Date()
-    var date = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate()
-    var time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds()
-
-    return date + ' ' + time
+    return today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate()
   }
 
 
@@ -70,107 +235,129 @@ export class LiveUpdateController {
     return /^[a-zA-Z()]+$/.test(c) || this.isSpecialChar(c)
   }
 
-  async liveUpdateWI(state: any) {
-    const cheerio = require('cheerio')
-    const axios = require('axios')
+  async liveUpdateMN(state: any) {
+    console.log('Updating state ' + state.name)
+    const puppeteer = require('puppeteer')
 
-    let stateUrl = state.url, stateId = state.id
-    let stateMapData: Map<string, number> = new Map()
-    let countyMapData: Map<string, number> = new Map()
-    const stateConst = ['Positive', 'Death']
-    let allCounties = await this.countyRepository.find({
-      where: {
-        usStateId: stateId
-      }
+    const b = await puppeteer.launch()
+    b.on('disconnected', () => {
+      console.log('disconnected browerw')
     })
-    const allCountieName = allCounties.map(state => state.name)
-    console.log(allCounties)
+    const p = await b.newPage()
 
-    await axios.get(stateUrl).then((response: any) => {
-      const $ = cheerio.load(response.data)
-      const allData = $('td').text()
+    await p.goto(state.url)
 
-      let buildingVal = false, key = '', data = ''
+    p.setDefaultNavigationTimeout(0);
+    p.setRequestInterception(true);
 
-      console.log(allData)
-
-      for (let i = 0; i < allData.length; i++) {
-        let c = allData.substring(i, i + 1)
-        if (this.isAlphabet(c)) {
-          if (buildingVal) {
-            if (stateConst.includes(key)) {
-              stateMapData.set(key, parseInt(data))
-            } else {
-              countyMapData.set(key, parseInt(data))
-            }
-            key = '', data = '', buildingVal = false
-          }
-          key += c
-        }
-        if (this.isNumeric(c)) {
-          buildingVal = true
-          data += c
-        }
+    p.on('request', async (request: any) => {
+      if (request.resourceType() === 'image' || request.resourceType() === 'media') {
+        request.abort();
+      } else {
+        request.continue();
       }
-    })
+    });
 
-    console.log(stateMapData)
-    console.log(countyMapData)
+    await p.goto(state.url)
 
-    // for (let medicalType of stateConst) {
-    //   console.log(medicalType)
-    //   this.caseNumberRepository.create(new CaseNumber({
-    //     'no': stateMapData.get(medicalType) ? stateMapData.get(medicalType) : -1,
-    //     'medicalType': MedicalType.medicalType,
-    //     'territoryType': Territory.USSTATE.toString(),
-    //     'territoryId': stateId,
-    //     'timeStampt': Date.now().toString()
-    //   }))
-    // }
+    await p.waitForXPath("//li[contains(., 'Positive:')]", 5000)
+    const positive = await p.$x("//li[contains(., 'Positive:')]")
+    const positiveText = this.extractInteger(String(await this.innerText(p, positive[0])))
 
-    // for (let countyName of countyMapData.keys()) {
-    //   if (!allCountieName.includes(countyName)) {
-    //     this.countyRepository.create(new County({
-    //       'name': countyName,
-    //       'usStateId': stateId
-    //     }))
-    //   }
-    //   this.caseNumberRepository.create(new CaseNumber({
-    //     'no': countyMapData.get(countyName),
-    //     'medicalType': 'Total',
-    //     'territoryType': Territory.USCOUNTY.toString(),
-    //     'territoryId': stateId,
-    //     'timeStampt': Date.now().toString()
-    //   }))
-    // }
+    await console.log('positive national ' + positiveText)
+
+    await p.waitForXPath("//li[contains(., 'Deaths:')]", 5000)
+    const death = await p.$x("//li[contains(., 'Deaths:')]")
+    const deathText = this.extractInteger(String(await this.innerText(p, death[0])))
+
+    await console.log('death national ' + deathText)
+
+    await this.caseNumberRepository.create(new CaseNumber({
+      'no': positiveText ? positiveText : -1,
+      'medicalType': MedicalType.Positive,
+      'territoryType': Territory.COUNTRY,
+      'territoryId': state.id,
+      'timeStampt': this.getCurrentDateTime()
+    }))
+
+    await this.caseNumberRepository.create(new CaseNumber({
+      'no': deathText ? deathText : -1,
+      'medicalType': MedicalType.Death,
+      'territoryType': Territory.COUNTRY,
+      'territoryId': state.id,
+      'timeStampt': this.getCurrentDateTime()
+    }))
+
+    await b.close()
   }
 
-  async liveUpdateMN(state: any) {
-    console.log('run mnke')
-    const cheerio = require('cheerio')
-    const axios = require('axios')
+  async updateArticleDB() {
+    console.log('here')
+    let stateUrl = 'https://doi.org/' + '10.1016/j.idm.2020.02.001'
+    const puppeteer = require('puppeteer');
 
-    let stateUrl = state.url, stateId = state.id
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
 
-    await axios.get(stateUrl).then((response: any) => {
-      const $ = cheerio.load(response.data)
-      const allData = $('div ul li').text().trim()
-      let noTested = '', noPositive = '', countiesStr = ''
+    await page.goto('https://news.ycombinator.com', {waitUntil: 'networkidle2'});
+    await page.pdf({path: 'hn.pdf', format: 'A4'});
 
-      let iTested = allData.indexOf('Approximate number of patients tested: ') + 39
-      let iTestedEnd = allData.indexOf('Positive: ')
-      let iPositive = iTestedEnd + 'Positive: '.length
-      let iPositiveEnd = allData.indexOf('Counties with cases: ')
-      let iCounty = iPositiveEnd + 'Counties with cases: '.length
-      let iCountyEnd = allData.indexOf("2020 News Releases")
+    await browser.close();
+  }
 
-      noTested = allData.substring(iTested, iTestedEnd)
-      noPositive = allData.substring(iPositive, iPositiveEnd)
-      countiesStr = allData.substring(iCounty, iCountyEnd)
+  async liveUpdateText(state: any) {
+    console.log('Updating state ' + state.name)
+    const puppeteer = require('puppeteer')
 
-      console.log('tested' + noTested)
-      console.log('pos' + noPositive)
-      console.log('countries' + countiesStr.split(', '))
+    const b = await puppeteer.launch()
+    b.on('disconnected', () => {
+      console.log('disconnected browerw')
     })
+    const p = await b.newPage()
+
+    await p.goto(state.url)
+
+    p.setDefaultNavigationTimeout(0);
+    p.setRequestInterception(true);
+
+    p.on('request', async (request: any) => {
+      if (request.resourceType() === 'image' || request.resourceType() === 'media') {
+        request.abort();
+      } else {
+        request.continue();
+      }
+    });
+
+    await p.goto(state.url)
+
+    await p.waitForXPath("//li[contains(., 'Total cases:')]", 5000)
+    const positive = await p.$x("//li[contains(., 'Total cases:')]")
+    const positiveText = this.extractInteger(String(await this.innerText(p, positive[0])))
+
+    await console.log('positive national ' + positiveText)
+
+    await p.waitForXPath("//li[contains(., 'Total deaths:')]", 5000)
+    const death = await p.$x("//li[contains(., 'Total deaths:')]")
+    const deathText = this.extractInteger(String(await this.innerText(p, death[0])))
+
+    await console.log('death national ' + deathText)
+
+    await this.caseNumberRepository.create(new CaseNumber({
+      'no': positiveText ? positiveText : -1,
+      'medicalType': MedicalType.Positive,
+      'territoryType': Territory.COUNTRY,
+      'territoryId': state.id,
+      'timeStampt': this.getCurrentDateTime()
+    }))
+
+    await this.caseNumberRepository.create(new CaseNumber({
+      'no': deathText ? deathText : -1,
+      'medicalType': MedicalType.Death,
+      'territoryType': Territory.COUNTRY,
+      'territoryId': state.id,
+      'timeStampt': this.getCurrentDateTime()
+    }))
+
+    await b.close()
   }
 }

@@ -16,11 +16,7 @@ export async function main(options: ApplicationConfig = {}) {
 
   // Instanciate CronController
   const cronController = app.controller(LiveUpdateController);
-
-  // Get Instance
   const cronControllerInstance = await cronController.getValue(app);
-
-  // Inject by constructor
   const cron = new LiveUpdate(cronControllerInstance);
 
   // Invoke method

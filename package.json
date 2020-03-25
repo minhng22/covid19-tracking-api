@@ -60,6 +60,7 @@
     "loopback-connector-mongodb": "^4.2.0",
     "minimist": "^1.2.5",
     "node-cron": "^2.0.3",
+    "puppeteer": "^2.1.1",
     "tslib": "^1.10.0"
   },
   "devDependencies": {

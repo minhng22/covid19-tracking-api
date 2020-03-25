@@ -1,4 +1,4 @@
 export const MedicalType = {
-  'Total': 'TOTAL',
+  'Positive': 'POSITIVE',
   'Death': 'DEATH'
 }
