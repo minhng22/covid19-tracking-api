@@ -14,8 +14,10 @@ export class LiveUpdate {
   private async eachHour() {
     console.log('Start Cron Jobs');
 
-    await this.cronController.liveUpdateCountryData()
-    await this.cronController.liveUpdateStateData();
-    console.log('Updating state data every hour');
+    cron.schedule('* * * * *', async () => {
+      await this.cronController.liveUpdateCountryData()
+      await this.cronController.liveUpdateStateData();
+      console.log('Updating state data every hour');
+    })
   }
 }
