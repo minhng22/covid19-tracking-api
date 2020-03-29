@@ -2,11 +2,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
 const boot_1 = require("@loopback/boot");
-const rest_explorer_1 = require("@loopback/rest-explorer");
 const repository_1 = require("@loopback/repository");
 const rest_1 = require("@loopback/rest");
+const rest_explorer_1 = require("@loopback/rest-explorer");
 const service_proxy_1 = require("@loopback/service-proxy");
-const path_1 = tslib_1.__importDefault(require("path"));
+const path = tslib_1.__importStar(require("path"));
 const sequence_1 = require("./sequence");
 class CovidTrackingApiApplication extends boot_1.BootMixin(service_proxy_1.ServiceMixin(repository_1.RepositoryMixin(rest_1.RestApplication))) {
     constructor(options = {}) {
@@ -14,7 +14,7 @@ class CovidTrackingApiApplication extends boot_1.BootMixin(service_proxy_1.Servi
         // Set up the custom sequence
         this.sequence(sequence_1.MySequence);
         // Set up default home page
-        this.static('/', path_1.default.join(__dirname, '../public'));
+        this.static('/', path.join(__dirname, '../public'));
         // Customize @loopback/rest-explorer configuration here
         this.configure(rest_explorer_1.RestExplorerBindings.COMPONENT).to({
             path: '/explorer',

@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2018,2019. All Rights Reserved.
+// Copyright IBM Corp. 2018,2020. All Rights Reserved.
 // Node module: @loopback/context
 // This file is licensed under the MIT License.
 // License text available at https://opensource.org/licenses/MIT
@@ -29,7 +29,7 @@ export type BoundValue = any;
  */
 export type ValueOrPromise<T> = T | PromiseLike<T>;
 
-export type MapObject<T> = {[name: string]: T};
+export type MapObject<T> = Record<string, T>;
 
 /**
  * Check whether a value is a Promise-like instance.

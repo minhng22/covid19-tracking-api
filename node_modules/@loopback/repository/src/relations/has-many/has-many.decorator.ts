@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2018,2019. All Rights Reserved.
+// Copyright IBM Corp. 2018,2020. All Rights Reserved.
 // Node module: @loopback/repository
 // This file is licensed under the MIT License.
 // License text available at https://opensource.org/licenses/MIT
@@ -19,7 +19,7 @@ export function hasMany<T extends Entity>(
   targetResolver: EntityResolver<T>,
   definition?: Partial<HasManyDefinition>,
 ) {
-  return function(decoratedTarget: object, key: string) {
+  return function (decoratedTarget: object, key: string) {
     const meta: HasManyDefinition = Object.assign(
       // default values, can be customized by the caller
       {name: key},
