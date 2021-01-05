@@ -55,7 +55,7 @@
     "@loopback/rest": "^3.1.0",
     "@loopback/rest-explorer": "^2.0.2",
     "@loopback/service-proxy": "^2.0.2",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "cheerio": "^1.0.0-rc.3",
     "loopback-connector-mongodb": "^4.2.0",
     "minimist": "^1.2.5",
